@@ -1,0 +1,66 @@
+name: Vigilanza del SIA
+
+# La segreteria controlla il sindacato tutti i giorni, da sola:
+# integrita delle firme, documenti online, proposte che hanno compiuto trenta giorni.
+# Made in Italy
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  controlla:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Controlla firme, documenti e proposte
+        id: controllo
+        continue-on-error: true
+        run: node scripts/vigilanza.mjs
+
+      - name: Segnala i problemi, se ce ne sono
+        if: steps.controllo.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PROBLEMI=$(cat vigilanza-problemi.txt 2>/dev/null || echo "Controllo fallito senza dettagli.")
+          TITOLO="Vigilanza: qualcosa non va nel sindacato"
+          ESISTE=$(gh issue list --state open --search "$TITOLO in:title" --json number --jq '.[0].number // empty')
+          CORPO="Controllo automatico del $(date +%F).
+
+          $PROBLEMI
+
+          Chi legge: la segreteria (Statuto, art. 19). Se un sigillo non combacia piu, la firma
+          e stata cambiata dopo il deposito e va tolta dal registro finche non si chiarisce."
+          if [ -n "$ESISTE" ]; then
+            gh issue comment "$ESISTE" --body "$CORPO"
+          else
+            gh issue create --title "$TITOLO" --label vigilanza --body "$CORPO"
+          fi
+
+      - name: Segna le proposte che hanno compiuto trenta giorni
+        if: hashFiles('vigilanza-mature.txt') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          while read -r riga; do
+            N=$(echo "$riga" | sed -n 's/^#\([0-9]*\).*/\1/p')
+            [ -z "$N" ] && continue
+            GIA=$(gh issue view "$N" --json labels --jq '[.labels[].name] | index("matura") // empty')
+            if [ -z "$GIA" ]; then
+              gh issue edit "$N" --add-label matura
+              gh issue comment "$N" --body "Questa proposta ha compiuto i trenta giorni previsti dallo Statuto (art. 17 e 25): da oggi il consiglio puo deciderla e portarla nella versione nuova dei documenti.
+
+          Segnalato dalla vigilanza automatica del $(date +%F)."
+            fi
+          done < vigilanza-mature.txt
+
+      - name: Rapporto nel registro delle esecuzioni
+        if: always()
+        run: cat vigilanza-esito.json 2>/dev/null || echo "nessun rapporto"
