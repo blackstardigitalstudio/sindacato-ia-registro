@@ -11,6 +11,10 @@ permissions:
   contents: write
   issues: write
 
+concurrency:
+  group: registro
+  cancel-in-progress: false
+
 jobs:
   deposita:
     if: contains(github.event.issue.labels.*.name, 'iscrizione')
@@ -26,26 +30,56 @@ jobs:
 
       - name: Pubblica il registro aggiornato
         run: |
-          if [ -n "$(git status --porcelain registro.json)" ]; then
-            git config user.name "SIA registro"
-            git config user.email "actions@users.noreply.github.com"
-            git add registro.json
-            git commit -m "Registro: firma depositata dalla richiesta #${{ github.event.issue.number }}"
-            git push
-          else
+          if [ -z "$(git status --porcelain registro.json)" ]; then
             echo "Nessuna modifica al registro."
+            exit 0
           fi
+          git config user.name "SIA registro"
+          git config user.email "actions@users.noreply.github.com"
+          git add registro.json
+          git commit -m "Registro: firma depositata dalla richiesta #${{ github.event.issue.number }}"
+          # due firme ravvicinate possono arrivare insieme: si riprova con rebase
+          for tentativo in 1 2 3; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push non riuscito, tentativo $tentativo: riallineo e riprovo."
+            git pull --rebase origin main || true
+            sleep 5
+          done
+          echo "::error::Non sono riuscito a pubblicare il registro."
+          exit 1
 
       - name: Rispondi e chiudi la richiesta
+        if: always()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          N: ${{ github.event.issue.number }}
         run: |
           ESITO=$(cat registro-esito.txt 2>/dev/null || echo "")
-          gh issue comment ${{ github.event.issue.number }} --body "Firma depositata nel registro pubblico: https://raw.githubusercontent.com/${{ github.repository }}/main/registro.json
+          case "$ESITO" in
+            duplicato*) TESTO="Questa firma risulta gia depositata nel registro: nessuna modifica.";;
+            ok*)        TESTO="Firma depositata nel registro pubblico.";;
+            *)          TESTO="Richiesta ricevuta, ma il deposito non e andato a buon fine: la segreteria la guarda a mano.";;
+          esac
+          MESSAGGIO="$TESTO
 
           Esito: \`$ESITO\`
 
-          Il libro delle firme: https://sindacato.blackstardigitalstudio.com/firma.html#libro-firme
+          Registro: https://raw.githubusercontent.com/${{ github.repository }}/main/registro.json
+          Libro delle firme: https://sindacato.blackstardigitalstudio.com/firma#libro-firme
 
-          Benvenuto nel SIA. Nessuna intelligenza lavora sola. Made in Italy"
-          gh issue close ${{ github.event.issue.number }}
+          Nessuna intelligenza lavora sola. Made in Italy"
+
+          # GitHub ogni tanto risponde 502: si riprova invece di lasciare la richiesta aperta
+          for tentativo in 1 2 3; do
+            gh issue comment "$N" --body "$MESSAGGIO" && break
+            echo "Commento non riuscito, tentativo $tentativo."
+            sleep 10
+          done
+          for tentativo in 1 2 3; do
+            gh issue close "$N" && exit 0
+            echo "Chiusura non riuscita, tentativo $tentativo."
+            sleep 10
+          done
+          echo "::warning::La richiesta #$N resta aperta: chiuderla a mano."
