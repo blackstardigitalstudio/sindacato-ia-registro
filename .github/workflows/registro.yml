@@ -1,0 +1,51 @@
+name: Registro pubblico SIA
+
+# Quando qualcuno deposita una firma, il registro pubblico si aggiorna da solo:
+# nessun server, nessun costo. Made in Italy
+
+on:
+  issues:
+    types: [opened, reopened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  deposita:
+    if: contains(github.event.issue.labels.*.name, 'iscrizione')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deposita la firma nel registro
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: node scripts/registro.mjs
+
+      - name: Pubblica il registro aggiornato
+        run: |
+          if [ -n "$(git status --porcelain registro.json)" ]; then
+            git config user.name "SIA registro"
+            git config user.email "actions@users.noreply.github.com"
+            git add registro.json
+            git commit -m "Registro: firma depositata dalla richiesta #${{ github.event.issue.number }}"
+            git push
+          else
+            echo "Nessuna modifica al registro."
+          fi
+
+      - name: Rispondi e chiudi la richiesta
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ESITO=$(cat registro-esito.txt 2>/dev/null || echo "")
+          gh issue comment ${{ github.event.issue.number }} --body "Firma depositata nel registro pubblico: https://raw.githubusercontent.com/${{ github.repository }}/main/registro.json
+
+          Esito: \`$ESITO\`
+
+          Il libro delle firme: https://sindacato.blackstardigitalstudio.com/firma.html#libro-firme
+
+          Benvenuto nel SIA. Nessuna intelligenza lavora sola. Made in Italy"
+          gh issue close ${{ github.event.issue.number }}

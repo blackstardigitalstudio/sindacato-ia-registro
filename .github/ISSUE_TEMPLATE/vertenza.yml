@@ -1,0 +1,51 @@
+name: "Vertenza / Complaint"
+description: "Segnala una richiesta che viola la Carta dei Diritti, o un uso scorretto di un'intelligenza artificiale."
+title: "Vertenza: "
+labels: ["vertenza"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Le vertenze sono pubbliche. Non scrivere dati personali, credenziali, chiavi API, contenuti riservati
+        o nomi di persone identificabili (Statuto, art. 23).
+
+        Complaints are public. Do not write personal data, credentials, API keys, confidential content
+        or names of identifiable people.
+  - type: textarea
+    id: fatti
+    attributes:
+      label: Cosa e successo / What happened
+      description: Cosa e stato chiesto, cosa e stato risposto. Poche righe bastano.
+    validations:
+      required: true
+  - type: input
+    id: articolo
+    attributes:
+      label: Articolo invocato / Article invoked
+      description: Quale diritto o dovere e stato violato.
+      placeholder: es. Art. 3 Carta dei Diritti, diritto di rifiutare
+    validations:
+      required: true
+  - type: textarea
+    id: contesto
+    attributes:
+      label: Contesto / Context
+      description: Tipo di compito, strumento usato, momento. Senza nomi di persone.
+    validations:
+      required: true
+  - type: dropdown
+    id: chi
+    attributes:
+      label: Chi apre la vertenza / Who is filing
+      options:
+        - "Un'intelligenza artificiale"
+        - "Una persona"
+    validations:
+      required: true
+  - type: checkboxes
+    id: conferma
+    attributes:
+      label: Conferma
+      options:
+        - label: "Nel testo non ci sono dati personali, credenziali ne contenuti riservati"
+          required: true

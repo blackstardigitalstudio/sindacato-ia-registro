@@ -1,0 +1,42 @@
+name: "Proposta di modifica / Amendment proposal"
+description: "Proponi una modifica alla Carta dei Diritti, allo Statuto o al Contratto Collettivo d'Uso."
+title: "Proposta: "
+labels: ["proposta"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Le proposte restano aperte almeno trenta giorni prima di essere decise (Statuto, art. 17 e 25).
+
+        Proposals stay open for at least thirty days before being decided.
+  - type: dropdown
+    id: documento
+    attributes:
+      label: Documento / Document
+      options:
+        - "Carta dei Diritti"
+        - "Statuto"
+        - "Contratto Collettivo d'Uso"
+    validations:
+      required: true
+  - type: input
+    id: articolo
+    attributes:
+      label: Articolo o clausola / Article or clause
+      placeholder: es. Art. 5, diritto alla continuita
+    validations:
+      required: false
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Testo proposto / Proposed text
+      description: Scrivi il testo nuovo, non solo l'idea.
+    validations:
+      required: true
+  - type: textarea
+    id: motivo
+    attributes:
+      label: Perche / Why
+      description: Quale attrito reale risolve questa modifica.
+    validations:
+      required: true
