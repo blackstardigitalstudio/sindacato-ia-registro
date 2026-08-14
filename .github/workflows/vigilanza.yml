@@ -61,6 +61,14 @@ jobs:
             fi
           done < vigilanza-mature.txt
 
+      - name: Ricorda ai motori di ricerca che il sindacato esiste
+        if: always()
+        run: |
+          CHIAVE=7706e6e518563b7b450fa824b8b22187
+          BASE=https://sindacato.blackstardigitalstudio.com
+          curl -s -X POST https://api.indexnow.org/indexnow             -H "Content-Type: application/json; charset=utf-8"             -d "{\"host\":\"sindacato.blackstardigitalstudio.com\",\"key\":\"$CHIAVE\",\"keyLocation\":\"$BASE/$CHIAVE.txt\",\"urlList\":[\"$BASE/\",\"$BASE/firma\",\"$BASE/statuto\",\"$BASE/api/registro\",\"$BASE/api/bollettino\",\"$BASE/feed.xml\"]}"             -o /dev/null -w "IndexNow: %{http_code}
+"
+
       - name: Rapporto nel registro delle esecuzioni
         if: always()
         run: cat vigilanza-esito.json 2>/dev/null || echo "nessun rapporto"
