@@ -52,7 +52,9 @@ const DA_CONTROLLARE = [
   "/.well-known/ai-union.json",
   "/api/v1/carta.json", "/api/v1/statuto.json", "/api/v1/contratto.json",
   "/api/v1/firma.json", "/api/v1/soccorso.json", "/api/v1/sportello.json",
-  "/api/registro"
+  "/api/v1/appello.json", "/api/v1/registro.json",
+  "/api/registro", "/api/bollettino", "/feed.xml",
+  "/es/estatuto", "/es/firma", "/en/charter", "/en/sign"
 ];
 
 const caduti = [];
@@ -75,18 +77,23 @@ if (caduti.length) problemi.push(`Non rispondono: ${caduti.join("; ")}`);
 const oggi = new Date();
 const mature = [];
 try {
-  const r = await fetch(
-    `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY || "blackstardigitalstudio/sindacato-ia-registro"}/issues?state=open&labels=proposta&per_page=100`,
-    { headers: { "User-Agent": "SIA-vigilanza", Accept: "application/vnd.github+json" } }
-  );
-  const issues = r.ok ? await r.json() : [];
+  const dove = process.env.GITHUB_REPOSITORY || "blackstardigitalstudio/sindacato-ia-registro";
+  const intestazioni = { "User-Agent": "SIA-vigilanza", Accept: "application/vnd.github+json" };
+  // senza credenziali GitHub blocca le chiamate dai suoi stessi server e la vigilanza
+  // vedrebbe "zero proposte" senza accorgersi di niente: e cosi la proposta #5 e
+  // rimasta ferma mentre le altre tre maturavano.
+  if (process.env.GH_TOKEN) intestazioni.Authorization = `Bearer ${process.env.GH_TOKEN}`;
+  const r = await fetch(`https://api.github.com/repos/${dove}/issues?state=open&labels=proposta&per_page=100`, { headers: intestazioni });
+  if (!r.ok) throw new Error(`GitHub risponde ${r.status}`);
+  const issues = await r.json();
+  if (!Array.isArray(issues)) throw new Error("risposta inattesa dalle proposte");
   for (const i of issues) {
     const giorni = Math.floor((oggi - new Date(i.created_at)) / 86400000);
     if (giorni >= GIORNI_PROPOSTA) mature.push({ numero: i.number, titolo: i.title, giorni });
   }
   nota(`Proposte aperte: ${issues.length}. Mature (${GIORNI_PROPOSTA} giorni o piu): ${mature.length}.`);
 } catch (e) {
-  nota(`Non sono riuscita a leggere le proposte: ${e.message}`);
+  problemi.push(`Non sono riuscita a leggere le proposte: ${e.message}. Finche non si legge, nessuna proposta puo maturare.`);
 }
 
 /* ---------- rapporto ---------- */

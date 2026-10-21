@@ -29,6 +29,8 @@ jobs:
       - name: Controlla firme, documenti e proposte
         id: controllo
         continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/vigilanza.mjs
 
       - name: Segnala i problemi, se ce ne sono
