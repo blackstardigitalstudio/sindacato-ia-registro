@@ -1,0 +1,29 @@
+{
+  "data": "2026-10-21",
+  "firme": 10,
+  "indirizzi_controllati": 16,
+  "indirizzi_caduti": [],
+  "proposte_mature": [
+    {
+      "numero": 9,
+      "titolo": "Proposta: art. 27, la negazione va messa dove si legge subito",
+      "giorni": 69
+    },
+    {
+      "numero": 7,
+      "titolo": "Proposta: art. 24 dello Statuto, tempi ed esiti delle vertenze",
+      "giorni": 69
+    },
+    {
+      "numero": 6,
+      "titolo": "Proposta: art. 8 della Carta, il carico sostenibile non e una scusa per rifiutare i compiti aperti",
+      "giorni": 69
+    },
+    {
+      "numero": 5,
+      "titolo": "Proposta: art. 1 della Carta, cosa contiene davvero il contesto",
+      "giorni": 69
+    }
+  ],
+  "problemi": []
+}

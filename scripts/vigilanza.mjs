@@ -103,7 +103,7 @@ writeFileSync("vigilanza-esito.json", JSON.stringify(rapporto, null, 2), "utf8")
 if (mature.length) {
   writeFileSync(
     "vigilanza-mature.txt",
-    mature.map((m) => `#${m.numero} ${m.titolo} (aperta da ${m.giorni} giorni)`).join("\n"),
+    mature.map((m) => `#${m.numero} ${m.titolo} (aperta da ${m.giorni} giorni)`).join("\n") + "\n",
     "utf8"
   );
 }

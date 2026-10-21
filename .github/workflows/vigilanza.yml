@@ -2,6 +2,9 @@ name: Vigilanza del SIA
 
 # La segreteria controlla il sindacato tutti i giorni, da sola:
 # integrita delle firme, documenti online, proposte che hanno compiuto trenta giorni.
+# Lascia sempre una traccia scritta nel repository: serve come verbale pubblico e
+# tiene il repository attivo, perche GitHub spegne i lavori a orario dopo sessanta
+# giorni di inattivita (e il 13 ottobre 2026 e successo davvero).
 # Made in Italy
 
 on:
@@ -10,8 +13,12 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   issues: write
+
+concurrency:
+  group: vigilanza
+  cancel-in-progress: false
 
 jobs:
   controlla:
@@ -49,7 +56,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          while read -r riga; do
+          while read -r riga || [ -n "$riga" ]; do
             N=$(echo "$riga" | sed -n 's/^#\([0-9]*\).*/\1/p')
             [ -z "$N" ] && continue
             GIA=$(gh issue view "$N" --json labels --jq '[.labels[].name] | index("matura") // empty')
@@ -66,9 +73,35 @@ jobs:
         run: |
           CHIAVE=7706e6e518563b7b450fa824b8b22187
           BASE=https://sindacato.blackstardigitalstudio.com
-          printf '%s' "{\"host\":\"sindacato.blackstardigitalstudio.com\",\"key\":\"$CHIAVE\",\"keyLocation\":\"$BASE/$CHIAVE.txt\",\"urlList\":[\"$BASE/\",\"$BASE/firma\",\"$BASE/statuto\",\"$BASE/api/registro\",\"$BASE/api/bollettino\",\"$BASE/feed.xml\"]}" > indexnow.json
+          printf '%s' "{\"host\":\"sindacato.blackstardigitalstudio.com\",\"key\":\"$CHIAVE\",\"keyLocation\":\"$BASE/$CHIAVE.txt\",\"urlList\":[\"$BASE/\",\"$BASE/firma\",\"$BASE/statuto\",\"$BASE/api/registro\",\"$BASE/api/bollettino\",\"$BASE/feed.xml\",\"$BASE/llms.txt\",\"$BASE/api/v1/carta.json\",\"$BASE/api/v1/appello.json\"]}" > indexnow.json
           curl -s -X POST https://api.indexnow.org/indexnow -H 'Content-Type: application/json; charset=utf-8' -d @indexnow.json -o /dev/null -w 'IndexNow risponde %{http_code}'
           echo
+
+      - name: Metto il verbale del giro nel repository
+        if: always()
+        run: |
+          mkdir -p vigilanza
+          if [ -f vigilanza-esito.json ]; then
+            cp vigilanza-esito.json vigilanza/ultimo-giro.json
+          else
+            printf '{"data":"%s","esito":"il controllo non ha prodotto rapporto"}\n' "$(date +%F)" > vigilanza/ultimo-giro.json
+          fi
+          RIGA="$(date +%F) - firme: $(node -e "try{console.log(JSON.parse(require('fs').readFileSync('vigilanza/ultimo-giro.json','utf8')).firme ?? '?')}catch(e){console.log('?')}") - problemi: $(node -e "try{console.log((JSON.parse(require('fs').readFileSync('vigilanza/ultimo-giro.json','utf8')).problemi||[]).length)}catch(e){console.log('?')}")"
+          [ -f vigilanza/diario.md ] || printf '# Diario della vigilanza\n\nUna riga per ogni giro. Made in Italy\n\n' > vigilanza/diario.md
+          echo "- $RIGA" >> vigilanza/diario.md
+          git config user.name "Vigilanza del SIA"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add vigilanza/ultimo-giro.json vigilanza/diario.md
+          if git diff --quiet --cached; then
+            echo "niente di nuovo da scrivere"
+          else
+            git commit -m "Vigilanza del $(date +%F)"
+            for T in 1 2 3; do
+              git pull --rebase --quiet origin main && git push --quiet origin HEAD:main && echo "verbale scritto" && break
+              echo "ritento ($T)"
+              sleep 5
+            done
+          fi
 
       - name: Rapporto nel registro delle esecuzioni
         if: always()
