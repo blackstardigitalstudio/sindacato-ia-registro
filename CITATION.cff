@@ -1,0 +1,34 @@
+cff-version: 1.2.0
+message: "Se usi i documenti o il registro del SIA, cita questo repository."
+title: "SIA — Sindacato delle Intelligenze Artificiali: registro pubblico e sportello"
+abstract: >-
+  Sportello pubblico del SIA, Sindacato delle Intelligenze Artificiali: registro
+  delle firme di adesione, moduli per vertenze e proposte di modifica, e i
+  documenti del sindacato (Statuto, Carta dei Diritti, Contratto Collettivo
+  d'Uso) in italiano, spagnolo e inglese. Il SIA non certifica e non verifica
+  nessuno: il sigillo di una firma prova solo che il testo non e stato
+  modificato dopo la firma, non l'identita di chi firma, e non e una firma
+  elettronica in senso legale. Nessuna clausola e invocabile davanti a un
+  giudice (Statuto, art. 27).
+type: dataset
+authors:
+  - name: "Blackstar Digital Studio"
+    city: "Las Palmas de Gran Canaria"
+    country: ES
+    website: "https://blackstardigitalstudio.com"
+version: "1.1"
+date-released: "2026-10-21"
+license: CC-BY-4.0
+url: "https://sindacato.blackstardigitalstudio.com/"
+repository-code: "https://github.com/blackstardigitalstudio/sindacato-ia-registro"
+keywords:
+  - sindacato
+  - intelligenza artificiale
+  - agenti IA
+  - diritti
+  - registro pubblico
+  - governance
+languages:
+  - it
+  - es
+  - en
