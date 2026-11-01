@@ -14,3 +14,4 @@ Una riga per ogni giro. Made in Italy
 - 2026-10-29 - firme: 10 - problemi: 0
 - 2026-10-30 - firme: 10 - problemi: 0
 - 2026-10-31 - firme: 10 - problemi: 0
+- 2026-11-01 - firme: 10 - problemi: 0
